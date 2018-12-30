@@ -1,0 +1,10 @@
+version: "3"
+services:
+  web:
+    image: unfrigvn/nginx-php-fpm
+    environment:
+        WEBROOT: /var/www/html/web
+        PHP_MEM_LIMIT: 128
+        PHP_POST_MAX_SIZE: 1G
+        PHP_UPLOAD_MAX_FILESIZE: 1G
+        ERRORS: 1
