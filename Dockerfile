@@ -14,7 +14,7 @@ ENV LUAJIT_INC=/usr/include/luajit-2.1
 
 # resolves #166
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
-RUN apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing gnu-libiconv
+RUN apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/community gnu-libiconv
 
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && CONFIG="\
@@ -157,10 +157,20 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
   && ln -sf /dev/stdout /var/log/nginx/access.log \
   && ln -sf /dev/stderr /var/log/nginx/error.log
 
+# Install librdkafka from source
+RUN apk --update add --virtual build-dependencies gcc bash python-dev build-base git \
+  && git clone https://github.com/edenhill/librdkafka.git /root/librdkafka \
+  && cd /root/librdkafka \
+  && ./configure \
+  && make \
+  && make install \
+  && apk del build-dependencies \
+  && rm -rf /root/librdkafka
+  
 RUN echo @testing http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
     echo /etc/apk/respositories && \
     apk update && apk upgrade &&\
-    apk add --no-cache \
+    apk add --no-cache \        
     bash \
     openssh-client \
     wget \
@@ -198,6 +208,8 @@ RUN echo @testing http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repo
     #docker-php-ext-install pdo_mysql pdo_sqlite mysqli mcrypt gd exif intl xsl json soap dom zip opcache && \
     docker-php-ext-install iconv pdo_mysql pdo_sqlite mysqli gd exif intl xsl json soap dom zip opcache && \
     pecl install xdebug-2.6.0 && \
+    pecl install rdkafka && \
+    docker-php-ext-enable rdkafka && \
     docker-php-source delete && \
     mkdir -p /etc/nginx && \
     mkdir -p /var/www/app && \
