@@ -1,7 +1,8 @@
 version: "3"
 services:
   php:
-    image: unfrgivn/nginx-php-fpm
+    #image: unfrgivn/nginx-php-fpm
+    build: ./
     environment:
         WEBROOT: /var/www/html/web
         PHP_MEM_LIMIT: 128
