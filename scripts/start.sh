@@ -42,16 +42,6 @@ if [[ "$REAL_IP_HEADER" == "1" ]] ; then
   sed -i "s#172.16.0.0/12#$REAL_IP_FROM#" /etc/nginx/sites-available/default.conf
  fi
 fi
-# Do the same for SSL sites
-if [ -f /etc/nginx/sites-available/default-ssl.conf ]; then
- if [[ "$REAL_IP_HEADER" == "1" ]] ; then
-  sed -i "s/#real_ip_header X-Forwarded-For;/real_ip_header X-Forwarded-For;/" /etc/nginx/sites-available/default-ssl.conf
-  sed -i "s/#set_real_ip_from/set_real_ip_from/" /etc/nginx/sites-available/default-ssl.conf
-  if [ ! -z "$REAL_IP_FROM" ]; then
-   sed -i "s#172.16.0.0/12#$REAL_IP_FROM#" /etc/nginx/sites-available/default-ssl.conf
-  fi
- fi
-fi
 
 #Display errors in docker logs
 if [ ! -z "$PHP_ERRORS_STDERR" ]; then
@@ -104,6 +94,16 @@ else
         echo "Disabling Xdebug"
       rm $XdebugFile
     fi
+fi
+
+# Trailing slash for Wordpress sites or explicitly set
+if [[ ! -z "$WP_ENV" || "$TRAILING_SLASH" == "1" ]] ; then
+  ln -sfn /etc/nginx/extras-available/trailing-slash.conf /etc/nginx/extras-enabled/
+fi
+
+# Wordpress Bedrock rules
+if [[ "$WP_FRAMEWORK" == "bedrock" ]] ; then
+  ln -sfn /etc/nginx/extras-available/wordpress-bedrock.conf /etc/nginx/extras-enabled/
 fi
 
 if [ ! -z "$PUID" ]; then
