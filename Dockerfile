@@ -82,6 +82,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
     gd-dev \
     geoip-dev \
     perl-dev \
+    procps \
     luajit-dev \
   && curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
   && curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
@@ -166,11 +167,11 @@ RUN apk --update add --virtual build-dependencies gcc bash python-dev build-base
   && make install \
   && apk del build-dependencies \
   && rm -rf /root/librdkafka
-  
+
 RUN echo @testing http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
     echo /etc/apk/respositories && \
     apk update && apk upgrade &&\
-    apk add --no-cache \        
+    apk add --no-cache \
     bash \
     openssh-client \
     wget \
@@ -237,11 +238,19 @@ COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /etc/nginx/sites-available/ && \
 mkdir -p /etc/nginx/sites-enabled/ && \
 mkdir -p /etc/nginx/ssl/ && \
+mkdir -p /etc/nginx/extras-available/ && \
+mkdir -p /etc/nginx/extras-enabled/ && \
 rm -Rf /var/www/* && \
 mkdir /var/www/html/
 
 COPY ./nginx/default.conf /etc/nginx/sites-available/default.conf
 RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
+
+# nginx default errors
+COPY ./errors/ /var/www/errors/
+
+# nginx override configs enabled by specific config options
+COPY ./nginx/extras/ /etc/nginx/extras-available/
 
 # tweak php-fpm config
 RUN echo "cgi.fix_pathinfo=0" > ${php_vars} &&\
