@@ -10,6 +10,7 @@ echo -e "Host *\n\tStrictHostKeyChecking no\n" >> /root/.ssh/config
 # Set custom webroot
 if [ ! -z "$WEBROOT" ]; then
  sed -i "s#root /var/www/html;#root ${WEBROOT};#g" /etc/nginx/sites-available/default.conf
+ sed -i "s#root /var/www/html;#root ${WEBROOT};#g" /etc/nginx/sites-available/default-ssl.conf
 else
  webroot=/var/www/html
 fi
@@ -37,11 +38,24 @@ fi
 # Pass real-ip to logs when behind ELB, etc
 if [[ "$REAL_IP_HEADER" == "1" ]] ; then
  sed -i "s/#real_ip_header X-Forwarded-For;/real_ip_header X-Forwarded-For;/" /etc/nginx/sites-available/default.conf
+ sed -i "s/#real_ip_header X-Forwarded-For;/real_ip_header X-Forwarded-For;/" /etc/nginx/sites-available/default-ssl.conf
+
  sed -i "s/#set_real_ip_from/set_real_ip_from/" /etc/nginx/sites-available/default.conf
+ sed -i "s/#set_real_ip_from/set_real_ip_from/" /etc/nginx/sites-available/default-ssl.conf
+
  if [ ! -z "$REAL_IP_FROM" ]; then
   sed -i "s#172.16.0.0/12#$REAL_IP_FROM#" /etc/nginx/sites-available/default.conf
+  sed -i "s#172.16.0.0/12#$REAL_IP_FROM#" /etc/nginx/sites-available/default-ssl.conf
  fi
 fi
+
+
+# CURRENTLY ON BY DEFAULT
+# Enables 404 pages through php index
+# if [ ! -z "$PHP_CATCHALL" ]; then
+#  sed -i 's#try_files $uri $uri/ =404;#try_files $uri $uri/ /index.php?$args;#g' /etc/nginx/sites-available/default.conf
+#  sed -i 's#try_files $uri $uri/ =404;#try_files $uri $uri/ /index.php?$args;#g' /etc/nginx/sites-available/default-ssl.conf
+# fi
 
 #Display errors in docker logs
 if [ ! -z "$PHP_ERRORS_STDERR" ]; then
@@ -105,6 +119,16 @@ fi
 if [[ "$WP_FRAMEWORK" == "bedrock" ]] ; then
   ln -sfn /etc/nginx/extras-available/wordpress-bedrock.conf /etc/nginx/extras-enabled/
 fi
+
+
+# Create bogus local SSL self-signed cert to allow for accessing site via SSL with trusted exception
+openssl req -x509 \
+  -out /etc/nginx/ssl/localhost.crt \
+  -keyout /etc/nginx/ssl/localhost.key \
+  -newkey rsa:2048 -nodes -sha256 \
+  -subj '/CN=localhost' -extensions EXT -config <( \
+   printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
+
 
 if [ ! -z "$PUID" ]; then
   if [ -z "$PGID" ]; then
