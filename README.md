@@ -37,6 +37,12 @@ location ~ .(aspx|php|jsp|cgi)$ {
 }
 ```
 
+### Nginx Errors
+
+The default is to route all errors to the main index.php and it is your responsibility to return the correct headers from within your application, otherwise any output will be seen as a 200.
+
+Allow Nginx to process PHP error codes using the default `nginx-errors.conf` with ENV `NGINX_ERRORS=1` or by mapping in a custom `.conf` file into the `/etc/nginx/extras-enabled/` folder inside the container. This requires setting up a custom `/var/www/errors/error-handler.php` or individual HTML files that you route to in a custom error conf file if you go that route. 
+
 ## Wordpress
 
 Trailing slash URLs enabled by default if `WP_ENV` is present

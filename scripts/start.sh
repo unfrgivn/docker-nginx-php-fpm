@@ -120,6 +120,10 @@ if [[ "$WP_FRAMEWORK" == "bedrock" ]] ; then
   ln -sfn /etc/nginx/extras-available/wordpress-bedrock.conf /etc/nginx/extras-enabled/
 fi
 
+# Nginx error handling
+if [[ "$NGINX_ERRORS" == "1" ]] ; then
+  ln -sfn /etc/nginx/extras-available/nginx-errors.conf /etc/nginx/extras-enabled/
+fi
 
 # Create bogus local SSL self-signed cert to allow for accessing site via SSL with trusted exception
 openssl req -x509 \
